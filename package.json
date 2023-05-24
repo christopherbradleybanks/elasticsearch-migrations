@@ -1,0 +1,39 @@
+{
+    "name": "elasticsearch-migrations",
+    "version": "1.0.0",
+    "description": "A migration tool for Elasticsearch.",
+    "main": "src/index.js",
+    "author": "Chris Banks <github@christopherbradleybanks.com>",
+    "scripts": {
+        "prepublish": "scripts/prepublish.sh",
+        "release": "np --no-tests",
+        "test": "echo 'Error: no test specified'"
+    },
+    "bin": {
+        "elastic-migrate": "./bin/cli.js"
+    },
+    "keywords": [
+        "migrate",
+        "migrations",
+        "elastic",
+        "elasticsearch",
+        "schema",
+        "db",
+        "nosql",
+        "seed"
+    ],
+    "dependencies": {
+        "@elastic/elasticsearch": "^8.7.0",
+        "colors": "^1.4.0",
+        "dotenv": "^10.0.0",
+        "yargs": "^17.3.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/christopherbradleybanks/elasticsearch-migrations.git"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": "^14.17.0 || ^16.0.0 || >= 18.0.0"
+    }
+}
