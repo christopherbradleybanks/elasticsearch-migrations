@@ -1,35 +1,35 @@
-const path = require('path');
-const config = require('../utils/config');
+const { processMigrations, getProcessedMigrations } = require('../utils/helpers');
 
-module.exports = async function down(client, until) {
-  const migrationsDir = config.migrationsDir;
-  const migrations = fs.readdirSync(migrationsDir).filter(file => file.endsWith('.js')).sort().reverse();
-  for (const migration of migrations) {
-    const lastMigration = await client.search({
-      index: 'migration_history',
-      body: {
-        query: {
-          match: {
-            name: migration
-          }
-        }
-      }
-    });
+async function down(client, targetMigration) {
+  // Get migrations from the index that have been run up
+  let processedMigrations = await getProcessedMigrations(client, 'up');
 
-    if (!lastMigration.body.hits.hits.length || lastMigration.body.hits.hits[0]._source.action !== 'up') {
-      continue;
+  // Reverse the order to get the latest migrations first
+  processedMigrations = processedMigrations.sort().reverse();
+
+  // If targetMigration is specified, run migrations until that one
+  if (targetMigration) {
+    const targetIndex = processedMigrations.indexOf(targetMigration);
+    if (targetIndex === -1) {
+      throw new Error('Target migration not found or not in "up" state');
     }
 
-    if (until && migration < until) break;
-    const { down } = require(path.join(migrationsDir, migration));
-    await down(client);
-    await client.index({
-      index: 'migration_history',
-      body: {
-        name: migration,
-        action: 'down',
-        timestamp: new Date().toISOString()
-      }
-    });
+    // Adjust indexMigrations to include migrations up to and including the target
+    processedMigrations = processedMigrations.slice(0, targetIndex + 1);
+  } else {
+    // If targetMigration is not specified, just run the last migration
+    processedMigrations = processedMigrations.slice(0, 1);
   }
-};
+  const {batchId, message} = await processMigrations(processedMigrations, 'down', client)
+  if(!batchId) {
+    return {message}
+  }
+  if(targetMigration){
+    return {message: `Migrations reverted starting from ${batchId} until ${targetMigration}`}
+  }
+  else {
+    return {message: `Migration ${batchId} successfully reverted.`}
+  }
+}
+
+module.exports = down;

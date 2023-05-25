@@ -18,9 +18,9 @@ function getAuth(authStr) {
 
 const config = {
   migrationsDir: path.resolve(process.env.MIGRATIONS_DIR || './migrations'),
-  local: {
+  development: {
     elasticsearchOptions: {
-      node: process.env.LOCAL_ELASTICSEARCH_URL,
+      node: process.env.LOCAL_ELASTICSEARCH_URL || `http://localhost:9200`,
       auth: process.env.LOCAL_ELASTICSEARCH_AUTH ? getAuth(process.env.LOCAL_ELASTICSEARCH_AUTH) : undefined,
       tls: process.env.LOCAL_TLS_CA_CERT ? {
         ca: fs.readFileSync(process.env.LOCAL_TLS_CA_CERT),

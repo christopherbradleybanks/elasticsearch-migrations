@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const client = require('../src/utils/client');
+const createClient = require('../src/utils/client');
 const yargs = require('yargs');
 const colors = require('colors');
 const { hideBin } = require('yargs/helpers');
@@ -7,12 +7,13 @@ const { hideBin } = require('yargs/helpers');
 const {
     up, 
     down,
-    create,
+    make,
+    latest,
 } = require('../src/commands');
 
 yargs(hideBin(process.argv))
   .command(
-    'create <name>',
+    'migrate:make <name>',
     'Create a new migration',
     (yargs) => {
       yargs.positional('name', {
@@ -21,12 +22,12 @@ yargs(hideBin(process.argv))
       });
     },
     (argv) => {
-      create(argv.name);
+      make(argv.name);
       console.log(colors.green('Migration file created successfully'));
     }
   )
   .command(
-    'up [until]',
+    'migrate:up [until]',
     'Run all migrations that have not yet been applied',
     (yargs) => {
       yargs.positional('until', {
@@ -36,15 +37,16 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        await up(client, argv.until);
-        console.log(colors.green('Migrations applied successfully'));
+        const client = await createClient()
+        const {message} = await up(client, argv.until);
+        console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
       }
     }
   )
   .command(
-    'down [until]',
+    'migrate:down [until]',
     'Undo migrations up to a specific point',
     (yargs) => {
       yargs.positional('until', {
@@ -54,8 +56,22 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        await down(client, argv.until);
-        console.log(colors.green('Migrations reversed successfully'));
+        const client = await createClient()
+        const {message} = await down(client, argv.until);
+        console.log(colors.green(message));
+      } catch (err) {
+        console.error(colors.red(err));
+      }
+    }
+  )
+  .command(
+    'migrate:latest',
+    'Migrate all migrations not yet applied',
+    async () => {
+      try {
+        const client = await createClient()
+        const {message} = await latest(client);
+        console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
       }

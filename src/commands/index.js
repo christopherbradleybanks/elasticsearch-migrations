@@ -1,9 +1,11 @@
 const down = require(`./down`)
 const up = require(`./up`)
-const create = require(`./create`)
+const make = require(`./make`)
+const latest = require(`./latest`)
 
 module.exports = {
     up,
     down,
-    create,
+    make,
+    latest,
 }

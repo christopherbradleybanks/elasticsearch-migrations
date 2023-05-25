@@ -1,42 +1,40 @@
-const path = require('path');
-const fs = require('fs');
-const FETCH_SIZE = 1
-module.exports = async function up(client, until) {
-    const migrationsDir = config.migrationsDir;
-    const migrations = fs.readdirSync(migrationsDir).filter(file => file.endsWith('.js')).sort();
-  for (const migration of migrations) {
-    const lastMigration = await client.search({
-      index: 'migration_history',
-      body: {
-        query: {
-          match_all: {}
-        },
-        size: FETCH_SIZE,
-        sort: [
-          {
-            timestamp: {
-              order: 'desc'
-            }
-          }
-        ]
-      }
-    });
+const { processMigrations, getPendingMigrations } = require('../utils/helpers');
 
-    if (lastMigration.body.hits.hits.length && lastMigration.body.hits.hits[0]._source.name >= migration) {
-      continue;
+async function up(client, targetMigration) {
+   // Find migrations that exist in the directory but not in the index
+  let pendingMigrations = await getPendingMigrations(client, `up`)
+   pendingMigrations.sort()
+  // If targetMigration is specified, run migrations until that one
+  if (targetMigration) {
+    const targetIndex = pendingMigrations.indexOf(targetMigration);
+    if (targetIndex === -1) {
+      throw new Error('Target migration not found or already executed');
     }
 
-    if (until && migration > until) break;
-    const { up } = require(path.join(migrationsDir, migration));
-    await up(client);
-    await client.index({
-      index: 'migration_history',
-      body: {
-        name: migration,
-        action: 'up',
-        timestamp: new Date().toISOString()
-      }
-    });
+    // Adjust pendingMigrations to include migrations up to and including the target
+    pendingMigrations = pendingMigrations.slice(0, targetIndex + 1);
+  } else {
+    // If targetMigration is not specified, just run the next migration
+    pendingMigrations = pendingMigrations.slice(0, 1);
   }
-};
+  
+  if (pendingMigrations.length === 0) {
+    return {
+      message: `No new migrations to run.`
+    };
+  }
 
+  // Create a batch ID based on the timestamp of the first migration in the batch
+  const {batchId, message} = await processMigrations(pendingMigrations, `up`, client);
+  if(!batchId) {
+    return {message}
+  }
+  if(targetMigration){
+    return {message: `Migrations applied starting from ${batchId}`}
+  }
+  else {
+    return {message: `Migration ${batchId} successfully executed.`}
+  }
+}
+
+module.exports = up;
