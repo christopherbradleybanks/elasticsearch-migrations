@@ -1,4 +1,4 @@
-const { Client } = require('@elastic/elasticsearch');
+const { Errors, Client } = require('@elastic/elasticsearch');
 const config = require('./config');
  
 function createClient(options) {
@@ -17,7 +17,7 @@ class ElasticsearchClientSingleton {
         return ElasticsearchClientSingleton.instance
       }
       this.client = createClient(options)
-      this.errors = errors
+      this.errors = Errors
       ElasticsearchClientSingleton.instance = this
     return this
   }

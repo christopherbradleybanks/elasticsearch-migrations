@@ -12,57 +12,87 @@ Elasticsearch Migrations is a package for managing Elasticsearch migrations, sim
 To install the package, run:
 
 ```bash
-npm install elasticsearch-migrations
+npm install -g elasticsearch-migrations
 ```
 
 ## Usage
 
-### Command-Line Interface
+### Elastic Migrate CLI
 
-#### Creating a Migration
+Elastic Migrate provides a set of command-line utilities to help manage Elasticsearch migrations. These utilities are available through the `elastic-migrate` command.
 
-To create a new migration file, use the `create` command:
 
-```bash
-npx elastic-migrate create [name]
-```
+### Commands
 
-This will create a new migration file in the `migrations` directory with the provided name.
+#### Migration
 
-#### Running Migrations
+- `migrate:make <name>`: Create a new migration. Replace `<name>` with the desired name for your migration.
 
-To run all migrations up to the most recent, use the `up` command:
+    Example usage:
+    ```bash
+    elastic-migrate migrate:make create_users_index
+    ```
+    On successful execution, it will output: "Migration file created successfully"
 
-```bash
-npx elastic-migrate up
-```
+- `migrate:up [until]`: Run all migrations that have not yet been applied. If the optional `[until]` argument is provided, the migrations will be applied up to (and including) the specified migration.
 
-To run all migrations up to a specific one, use the `up` command with the `--until` option:
+    Example usage:
+    ```bash
+    elastic-migrate migrate:up
+    ```
+    or with the `[until]` option:
+    ```bash
+    elastic-migrate migrate:up create_users_index
+    ```
+    
+- `migrate:down [until]`: Undo migrations up to a specific point. If the optional `[until]` argument is provided, migrations will be reversed up to (but not including) the specified migration.
 
-```bash
-npx elastic-migrate up --until [name]
-```
+    Example usage:
+    ```bash
+    elastic-migrate migrate:down
+    ```
+    or with the `[until]` option:
+    ```bash
+    elastic-migrate migrate:down create_users_index
+    ```
 
-#### Rolling Back Migrations
+- `migrate:latest`: Migrate all migrations not yet applied.
 
-To roll back all migrations, use the `down` command:
+    Example usage:
+    ```bash
+    elastic-migrate migrate:latest
+    ```
+#### Seeds (pending)
 
-```bash
-npx elastic-migrate down
-```
+- `seed:make <name>`: Create a new seed file. Replace `<name>` with the desired name for your seed file. *Note: this command is currently a stub and not implemented.*
 
-To roll back all migrations down to a specific one, use the `down` command with the `--until` option:
+    Example usage:
+    ```bash
+    elastic-migrate seed:make seed_users_index
+    ```
 
-```bash
-npx elastic-migrate down --until [name]
-```
+- `seed:run [file]`: Run all seed files that have not yet been applied. If the optional `[file]` argument is provided, only the specified seed file will be applied. *Note: this command is currently a stub and not implemented.*
+
+    Example usage:
+    ```bash
+    elastic-migrate seed:run
+    ```
+    or with the `[file]` option:
+    ```bash
+    elastic-migrate seed:run seed_users_index
+    ```
+
+Run `elastic-migrate --help` to see the list of available commands.
+
+All commands that interact with Elasticsearch require a client object from the `utils/client` module. This object should be passed as the first argument to the command. This client object encapsulates the Elasticsearch client and any other context required to interact with your Elasticsearch cluster.
+
 
 ### Programmatic Usage
 
-Elasticsearch Migrations can also be used in your code. First, import the `up` and `down` functions from the package:
+Elasticsearch Migrations can also be used in your code. First, import the `migrate` and `seed` libraries from the package:
 
 ```javascript
-const { up, down } = require('elasticsearch-migrations');
+const { migrate, seed } = require('elasticsearch-migrations');
 ```
 
 Then, you can use these functions to run or roll back migrations. Note that you need to pass your Elasticsearch client as the first argument:
@@ -71,9 +101,21 @@ Then, you can use these functions to run or roll back migrations. Note that you 
 const client = new Client({
   // Your client options here...
 });
+//Migrations
+await migrate.make(`create_users_index`)
+await migrate.up(client, '20230524_create_users_index.js');
+await migrate.down(client);
+await migrate.latest(client)
+await migrate.rollback(client)
+await migrate.rollback(client, `all`)
 
-up(client, '20230524_add_new_field.js');
-down(client, '20230524_add_new_field.js');
+//Seeds
+await seed.make(client, `insert_users`)
+await seed.run(client)
+await seed.run(client, `2023044_insert_users.js`)
+
+//
+
 ```
 
 ## Configuration
