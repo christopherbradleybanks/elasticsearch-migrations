@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const config = require(`../utils/config`);
+const config = require(`../../utils/config`);
 
 module.exports = function create(name) {
   const template = `

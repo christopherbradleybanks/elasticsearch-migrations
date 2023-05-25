@@ -1,11 +1,5 @@
-const {
-    up,
-    down,
-    create,
-} = require('./commands');
+const commands = require('./commands');
 
 module.exports = {
-  up,
-  down,
-  create,
-};
+  ...commands
+}

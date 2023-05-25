@@ -1,49 +1,29 @@
 const { Client } = require('@elastic/elasticsearch');
 const config = require('./config');
-
-async function createClient() {
+ 
+function createClient(options) {
   const env = process.env.NODE_ENV || 'development';
-  const clientConfig = config[env].elasticsearchOptions;
-
+  const clientConfig = options || config[env].elasticsearchOptions;
   if (!clientConfig) {
     throw new Error(`Invalid environment: ${env}`);
   }
-
   const client = new Client(clientConfig);
-
-  await createMigrationHistoryIndex(client);
-
   return client;
 }
 
-async function createMigrationHistoryIndex(client) {
-  const exists = await client.indices.exists({ index: 'migration_history' });
-  if (!exists) {
-    await client.indices.create({
-        index: 'migration_history',
-        body: {
-          mappings: {
-            properties: {
-              name: { type: 'keyword' },
-              action: { type: 'keyword' },
-              timestamp: { type: 'date' }
-            }
-          }
-        }
-      });
+class ElasticsearchClientSingleton {
+    constructor(options){
+      if (ElasticsearchClientSingleton.instance) {
+        return ElasticsearchClientSingleton.instance
+      }
+      this.client = createClient(options)
+      this.errors = errors
+      ElasticsearchClientSingleton.instance = this
+    return this
   }
-//   else {
-//     await client.indices.putMapping({
-//         index: 'migration_history',
-//         body: {
-//           properties: {
-//             name: { type: 'keyword' },
-//             action: { type: 'keyword' },
-//             timestamp: { type: 'date' }
-//           }
-//         }
-//       });
-//   }
+  getClient(){
+    return this.client
+  }
 }
 
-module.exports = createClient;
+module.exports = ElasticsearchClientSingleton;

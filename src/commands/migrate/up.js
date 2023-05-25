@@ -1,6 +1,9 @@
-const { processMigrations, getPendingMigrations } = require('../utils/helpers');
+const { processMigrations, getPendingMigrations,initDB, } = require('../../utils/helpers');
 
 async function up(client, targetMigration) {
+
+   //ensure indices are created
+   await initDB(client)
    // Find migrations that exist in the directory but not in the index
   let pendingMigrations = await getPendingMigrations(client, `up`)
    pendingMigrations.sort()

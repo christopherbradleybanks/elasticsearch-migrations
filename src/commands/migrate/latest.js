@@ -1,6 +1,8 @@
-const {processMigrations, getPendingMigrations } = require(`../utils/helpers`)
+const {processMigrations, getPendingMigrations, initDB, } = require(`../../utils/helpers`)
 
 async function latest(client) {
+    //ensure indices are created
+    await initDB(client)
     // Get migrations from the directory and the index
     let pendingMigrations = await getPendingMigrations(client, `up`);
   

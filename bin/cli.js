@@ -1,15 +1,13 @@
 #!/usr/bin/env node
-const createClient = require('../src/utils/client');
+const Client = require('../src/utils/client');
 const yargs = require('yargs');
 const colors = require('colors');
 const { hideBin } = require('yargs/helpers');
 
 const {
-    up, 
-    down,
-    make,
-    latest,
-} = require('../src/commands');
+    migrate,
+    seed,
+} = require('../src');
 
 yargs(hideBin(process.argv))
   .command(
@@ -22,7 +20,7 @@ yargs(hideBin(process.argv))
       });
     },
     (argv) => {
-      make(argv.name);
+      migrate.make(argv.name);
       console.log(colors.green('Migration file created successfully'));
     }
   )
@@ -37,8 +35,8 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const client = await createClient()
-        const {message} = await up(client, argv.until);
+        const {client} = new Client()
+        const {message} = await migrate.up(client, argv.until);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
@@ -56,8 +54,8 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const client = await createClient()
-        const {message} = await down(client, argv.until);
+        const {client} = new Client()
+        const {message} = await migrate.down(client, argv.until);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
@@ -69,8 +67,41 @@ yargs(hideBin(process.argv))
     'Migrate all migrations not yet applied',
     async () => {
       try {
-        const client = await createClient()
-        const {message} = await latest(client);
+        const {client} = new Client()
+        const {message} = await migrate.latest(client);
+        console.log(colors.green(message));
+      } catch (err) {
+        console.error(colors.red(err));
+      }
+    }
+  )
+  .command(
+    'seed:make <name>',
+    'Create a new seed file',
+    (yargs) => {
+      yargs.positional('name', {
+        describe: 'Name of the seed',
+        type: 'string',
+      });
+    },
+    (argv) => {
+      seed.make(argv.name);
+      console.log(colors.green('Seed file created successfully'));
+    }
+  )
+  .command(
+    'seed:run [file]',
+    'Run all seed files that have not yet been applied',
+    (yargs) => {
+      yargs.positional('file', {
+        describe: 'Apply specified seed file',
+        type: 'string',
+      });
+    },
+    async (argv) => {
+      try {
+        const {client} =  new Client()
+        const {message} = await seed.run(client, argv.file);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));

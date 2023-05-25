@@ -1,6 +1,8 @@
-const { processMigrations, getProcessedMigrations } = require('../utils/helpers');
+const { processMigrations, getProcessedMigrations, initDB } = require('../../utils/helpers');
 
 async function down(client, targetMigration) {
+  //ensure indices are created
+  await initDB(client)
   // Get migrations from the index that have been run up
   let processedMigrations = await getProcessedMigrations(client, 'up');
 

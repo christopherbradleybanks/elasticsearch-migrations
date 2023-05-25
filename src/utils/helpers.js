@@ -134,6 +134,35 @@ async function getPendingMigrations(client, direction = `up`) {
   return dirMigrations.filter(file => !indexMigrations.includes(path.parse(file).name));
 }
   
+async function createHistoryIndex(client, index, properties) {
+  exists = await client.indices.exists({ index });
+  if (!exists) {
+    await client.indices.create({
+        index,
+        body: {
+          mappings: {
+            properties
+          }
+        }
+      });
+  }
+  return exists
+}
+async function initDB(client){
+  await createHistoryIndex(client, `migration_history`, {
+    name: { type: 'keyword' },
+    action: { type: 'keyword' },
+    timestamp: { type: 'date' }
+  })
+  await createHistoryIndex(client, `seed_history`, {
+    name: {
+      type: `keyword`,
+    },
+    action: {type: `keyword`
+     },
+     timestamp: {type: `date`}
+  })
+}
 module.exports = {
     runMigration,
     addMigrationToIndex,
@@ -143,4 +172,6 @@ module.exports = {
     processMigrations,
     getPendingMigrations,
     getProcessedMigrations,
+    createHistoryIndex,
+    initDB,
 }

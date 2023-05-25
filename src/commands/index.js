@@ -1,11 +1,6 @@
-const down = require(`./down`)
-const up = require(`./up`)
-const make = require(`./make`)
-const latest = require(`./latest`)
-
+const migrate = require(`./migrate`)
+const seed = require(`./seed`)
 module.exports = {
-    up,
-    down,
-    make,
-    latest,
+    migrate,
+    seed,
 }
