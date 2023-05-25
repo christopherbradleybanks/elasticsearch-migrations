@@ -62,6 +62,19 @@ Elastic Migrate provides a set of command-line utilities to help manage Elastics
     ```bash
     elastic-migrate migrate:latest
     ```
+    
+- `migrate:rollback [all]`: Revert the latest batch of migrations. If the optional `[all]` argument is provided and set to true, all completed migrations will be reversed.
+
+    Example usage:
+    ```bash
+    elastic-migrate migrate:rollback
+    ```
+    or with the `[all]` option:
+    ```bash
+    elastic-migrate migrate:rollback true
+    ```
+
+This command reverts migrations that have previously been applied. Without any options, it will revert the last batch of migrations that were applied. If the `[all]` option is set to true, it will reverse all migrations that have been applied, effectively rolling back all changes made by this tool.
 #### Seeds (pending)
 
 - `seed:make <name>`: Create a new seed file. Replace `<name>` with the desired name for your seed file. *Note: this command is currently a stub and not implemented.*
@@ -107,7 +120,7 @@ await migrate.up(client, '20230524_create_users_index.js');
 await migrate.down(client);
 await migrate.latest(client)
 await migrate.rollback(client)
-await migrate.rollback(client, `all`)
+await migrate.rollback(client, true)
 
 //Seeds
 await seed.make(client, `insert_users`)

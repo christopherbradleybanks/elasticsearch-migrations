@@ -44,6 +44,25 @@ yargs(hideBin(process.argv))
     }
   )
   .command(
+    'migrate:rollback [all]',
+    `Revert latest migrations`,
+    (yargs) => {
+      yargs.positional('all', {
+        describe: 'rollback all migrations',
+        type: 'boolean',
+      });
+    },
+    async (argv) => {
+      try {
+        const {client} = new Client()
+        const {message} = await migrate.rollback(client, argv.all);
+        console.log(colors.green(message));
+      } catch (err) {
+        console.error(colors.red(err));
+      }
+    }
+  )
+  .command(
     'migrate:down [until]',
     'Undo migrations up to a specific point',
     (yargs) => {
