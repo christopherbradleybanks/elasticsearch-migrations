@@ -75,6 +75,15 @@ Elastic Migrate provides a set of command-line utilities to help manage Elastics
     ```
 
 This command reverts migrations that have previously been applied. Without any options, it will revert the last batch of migrations that were applied. If the `[all]` option is set to true, it will reverse all migrations that have been applied, effectively rolling back all changes made by this tool.
+
+- `migrate:destroy`: Deletes the migration history index
+
+    Example usage:
+    ```bash
+    elastic-migrate migrate:destroy
+    ```
+
+This command will remove the history index but will not undo any migrations 
 #### Seeds (pending)
 
 - `seed:make <name>`: Create a new seed file. Replace `<name>` with the desired name for your seed file. *Note: this command is currently a stub and not implemented.*
@@ -94,38 +103,40 @@ This command reverts migrations that have previously been applied. Without any o
     ```bash
     elastic-migrate seed:run seed_users_index
     ```
+- `seed:destroy`: Deletes the seed history index
 
+    Example usage:
+    ```bash
+    elastic-migrate seed:destroy
+    ```
+
+This command will remove the history index but will not undo any seeds 
 Run `elastic-migrate --help` to see the list of available commands.
-
-All commands that interact with Elasticsearch require a client object from the `utils/client` module. This object should be passed as the first argument to the command. This client object encapsulates the Elasticsearch client and any other context required to interact with your Elasticsearch cluster.
-
 
 ### Programmatic Usage
 
 Elasticsearch Migrations can also be used in your code. First, import the `migrate` and `seed` libraries from the package:
 
 ```javascript
-const { migrate, seed } = require('elasticsearch-migrations');
+const ElasticMigrations = require('elasticsearch-migrations');
+const { migrate, seed } = new ElasticMigrations(config)
 ```
 
-Then, you can use these functions to run or roll back migrations. Note that you need to pass your Elasticsearch client as the first argument:
-
 ```javascript
-const client = new Client({
-  // Your client options here...
-});
 //Migrations
 await migrate.make(`create_users_index`)
-await migrate.up(client, '20230524_create_users_index.js');
-await migrate.down(client);
-await migrate.latest(client)
-await migrate.rollback(client)
-await migrate.rollback(client, true)
+await migrate.up('20230524_create_users_index.js');
+await migrate.down();
+await migrate.latest()
+await migrate.rollback()
+await migrate.rollback(true)
+await migrate.destroy()
 
 //Seeds
-await seed.make(client, `insert_users`)
-await seed.run(client)
-await seed.run(client, `2023044_insert_users.js`)
+await seed.make(`insert_users`)
+await seed.run()
+await seed.run(`2023044_insert_users.js`)
+await seed.destroy()
 
 //
 
