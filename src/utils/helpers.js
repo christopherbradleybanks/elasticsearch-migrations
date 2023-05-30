@@ -1,7 +1,31 @@
 const config = require(`./config`)
 const path = require(`path`)
 const fs = require(`fs`)
-const {migrationsDir} = config
+const {migrationsDir, seedsDir} = config
+
+async function runSeed(client, seedName, direction = `up`) {
+  // Load the migration file
+  const seed = require(path.join(config.seedsDir, seedName));
+  
+  // Run the migration
+  await seed[direction](client);
+}
+
+async function addSeedToIndex(client, seed, direction) {
+  const doc = {
+    name: seed,
+    action: direction,
+    timestamp: new Date(),
+};
+
+await client.index({
+    index: 'seed_history',
+    id: seed,
+    body: doc,
+    refresh: 'true', // refresh the index after the operation
+    op_type: 'index',
+});
+} 
 
 async function runMigration(client, migrationName, direction) {
     // Load the migration file
@@ -28,13 +52,13 @@ await client.index({
 });
 }
 
-async function getMigrationsFromIndex(client, action) {
+async function getMigrationsFromIndex(client, action, index = `migration_history`) {
     const { hits: {hits} } = await client.search({
-      index: 'migration_history',
+      index,
       body: {
         query: {
           match: {
-            action: action
+            action,
           }
         },
       }
@@ -42,26 +66,60 @@ async function getMigrationsFromIndex(client, action) {
   
     return hits.map(hit => hit._source.name);
   }
+async function getBatchMigrations(client, batchId) {
+  let searchQuery;
+    
+    if (batchId) {
+        // If batchId is specified, return documents matching the batchId
+        searchQuery = {
+            match: { batch: batchId }
+        };
+    } else {
+        // If no batchId, retrieve the last document added, and return documents matching its batchId
+        const { hits: {hits} } = await client.search({
+            index: 'migration_history',
+            body: {
+                size: 1,
+                sort: [
+                    { timestamp: 'desc' }
+                ]
+            }
+        });
+
+        const lastBatchId = hits.length ? hits[0]._source.batch : null;
+        if(!lastBatchId){
+          return {hits: [], batch: null}
+        }
+        searchQuery = {
+            match: { batch: lastBatchId }
+        };
+    }
+
+    const { hits: {hits} } = await client.search({
+        index: 'migration_history',
+        body: {
+            query: searchQuery,
+            sort: [
+                { timestamp: 'desc' }
+            ]
+        }
+    });
+    console.log(`search Query`, searchQuery)
+    const {match: {batch}} = searchQuery
+    return {hits, batch}
+}
 
 async function rollbackBatch(client, batchId) {
-const { body } = await client.search({
-    index: 'migration_history',
-    body: {
-    query: {
-        match: { batch: batchId }
-    },
-    sort: [
-        { timestamp: 'desc' }
-    ]
-    }
-});
-
+const {hits, batch} = await getBatchMigrations(client, batchId)
 // Reverse the order to rollback the latest migrations first
-const migrations = body.hits.hits.reverse();
-
+if(!batch) {
+  return {message: `no migrations to rollback`}
+}
+const migrations = hits.reverse();
+let direction
 for (let migration of migrations) {
     const oppositeAction = migration._source.action === 'up' ? 'down' : 'up';
-
+    direction = oppositeAction
     try {
     // Run the migration
     await runMigration(client, migration._source.name, oppositeAction);
@@ -73,16 +131,31 @@ for (let migration of migrations) {
     throw err;
     }
 }
+
+if(direction === `down`)
+{
+  await deleteMigratedDownDocuments(client, batch)
 }
 
-function getMigrationsFromDirectory() {
-  const files = fs.readdirSync(migrationsDir);
-  const migrationFiles = files.filter(file => path.extname(file) === '.js');
+return {
+  message: `Successfully rolled back ${migrations.length} migrations with batchId: ${batch}`,
+  migrations,
+}
+}
+function getFilesFromDirectory(filepath) {
+  const files = fs.readdirSync(filepath);
+  const filteredFiles = files.filter(file => path.extname(file) === '.js');
 
   // Sort migration files in chronological order (by filename)
-  migrationFiles.sort();
+  filteredFiles.sort();
 
-  return migrationFiles;
+  return filteredFiles;
+}
+function getMigrationsFromDirectory() {
+  return getFilesFromDirectory(migrationsDir)
+}
+function getSeedsFromDirectory(){
+  return getFilesFromDirectory(seedsDir)
 }
 async function processMigrations(newMigrations, direction, client) {
    // If there are no new migrations, return
@@ -122,16 +195,24 @@ async function processMigrations(newMigrations, direction, client) {
 
 async function getProcessedMigrations(client, direction = `up`) {
   const dirMigrations = getMigrationsFromDirectory();
-  const indexMigrations = await getMigrationsFromIndex(client, direction);
+  const indexMigrations = await getMigrationsFromIndex(client, direction, `migration_history`);
   return dirMigrations.filter(file => indexMigrations.includes(path.parse(file).name));
 }
 
 async function getPendingMigrations(client, direction = `up`) {
-  const dirMigrations = getMigrationsFromDirectory();
-  const indexMigrations = await getMigrationsFromIndex(client, direction);
+  const dirMigrations = getFilesFromDirectory(migrationsDir);
+  const indexMigrations = await getMigrationsFromIndex(client, direction, `migration_history`);
 
   // Find migrations that exist in the directory but not in the index
   return dirMigrations.filter(file => !indexMigrations.includes(path.parse(file).name));
+}
+
+async function getPendingSeeds(client, direction = `up`) {
+  const dirMigrations = getFilesFromDirectory(seedsDir);
+  const indexSeeds = await getMigrationsFromIndex(client, direction, `seed_history` );
+
+  // Find migrations that exist in the directory but not in the index
+  return dirMigrations.filter(file => !indexSeeds.includes(path.parse(file).name));
 }
   
 async function createHistoryIndex(client, index, properties) {
@@ -152,7 +233,8 @@ async function initDB(client){
   await createHistoryIndex(client, `migration_history`, {
     name: { type: 'keyword' },
     action: { type: 'keyword' },
-    timestamp: { type: 'date' }
+    timestamp: { type: 'date' },
+    batch: {type: `keyword`},
   })
   await createHistoryIndex(client, `seed_history`, {
     name: {
@@ -160,9 +242,97 @@ async function initDB(client){
     },
     action: {type: `keyword`
      },
-     timestamp: {type: `date`}
+    timestamp: {type: `date`}
   })
 }
+
+async function deleteMigratedDownDocuments(client, batchId) {
+  if (!batchId) {
+    throw new Error('No batchId provided for deleteMigratedDownDocuments');
+  }
+
+  await client.deleteByQuery({
+    index: 'migration_history',
+    refresh: true,
+    body: {
+      query: {
+        bool: {
+          must: [
+            { match: { action: 'down' } },
+            { match: { batch: batchId } },
+          ],
+        },
+      },
+    },
+  });
+
+  console.log(`Documents with action 'down' and batch ${batchId} have been deleted and index has been refreshed`);
+}
+
+async function getBatchPropertiesSorted(client) {
+  const response = await client.search({
+    index: 'migration_history',
+    body: {
+      size: 0,
+      aggs: {
+        batch_ids: {
+          terms: {
+            field: 'batch',
+            order: { _key: 'desc' }
+          }
+        }
+      }
+    }
+  });
+
+  // Retrieve the batch ids from the response
+  const batchIds = response.aggregations.batch_ids.buckets.map(bucket => bucket.key);
+
+  return batchIds;
+}
+
+async function processSeeds(pendingSeeds, direction, client) {
+   // If there are no new seeds, return
+   if (pendingSeeds.length === 0) {
+    return {
+      message: `No new seeds to run.`
+    };
+  }
+  
+  // Run each seed in sequence
+  for (let seedFile of pendingSeeds) {
+    const seedName = path.parse(seedFile).name;
+    console.log(`Running seed: ${seedName}`);
+
+    try {
+      // Run the migration
+      await runSeed(client, seedName, direction);
+
+      // Add migration to index
+      await addSeedToIndex(client, seedName, direction);
+
+      console.log(`Seed completed: ${seedName}`);
+    } catch (err) {
+      console.error(`Seed failed: ${seedName}`, err);
+
+      throw err
+      
+    }
+  }
+  return {message: `successfully seeded ${pendingSeeds.length} files`}
+}
+
+async function destroyIndex(client, indexName) {
+  try {
+    const response = await client.indices.delete({ index: indexName });
+    console.log(`Index '${indexName}' deleted successfully.`);
+    return response;
+  } catch (error) {
+    console.error(`Error deleting index '${indexName}':`, error);
+    throw error;
+  }
+}
+
 module.exports = {
     runMigration,
     addMigrationToIndex,
@@ -174,4 +344,11 @@ module.exports = {
     getProcessedMigrations,
     createHistoryIndex,
     initDB,
+    deleteMigratedDownDocuments,
+    getBatchMigrations,
+    getBatchPropertiesSorted,
+    getPendingSeeds,
+    processSeeds,
+    getSeedsFromDirectory,
+    destroyIndex,
 }

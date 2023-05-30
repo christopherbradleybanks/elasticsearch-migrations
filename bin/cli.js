@@ -1,26 +1,22 @@
 #!/usr/bin/env node
-const Client = require('../src/utils/client');
+const ElasticMigrations = require('../src');
 const yargs = require('yargs');
 const colors = require('colors');
 const { hideBin } = require('yargs/helpers');
-
-const {
-    migrate,
-    seed,
-} = require('../src');
+const {migrate, seed} = new ElasticMigrations()
 
 yargs(hideBin(process.argv))
   .command(
     'migrate:make <name>',
     'Create a new migration',
-    (yargs) => {
+   async (yargs) => {
       yargs.positional('name', {
         describe: 'Name of the migration',
         type: 'string',
       });
     },
-    (argv) => {
-      migrate.make(argv.name);
+   async (argv) => {
+     await migrate.make(argv.name);
       console.log(colors.green('Migration file created successfully'));
     }
   )
@@ -35,8 +31,7 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const {client} = new Client()
-        const {message} = await migrate.up(client, argv.until);
+        const {message} = await migrate.up(argv.until);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
@@ -54,8 +49,7 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const {client} = new Client()
-        const {message} = await migrate.rollback(client, argv.all);
+        const {message} = await migrate.rollback(argv.all);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
@@ -73,8 +67,7 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const {client} = new Client()
-        const {message} = await migrate.down(client, argv.until);
+        const {message} = await migrate.down(argv.until);
         console.log(colors.green(message));
       } catch (err) {
         console.error(colors.red(err));
@@ -86,9 +79,19 @@ yargs(hideBin(process.argv))
     'Migrate all migrations not yet applied',
     async () => {
       try {
-        const {client} = new Client()
-        const {message} = await migrate.latest(client);
+        const {message} = await migrate.latest();
         console.log(colors.green(message));
+      } catch (err) {
+        console.error(colors.red(err));
+      }
+    }
+  )
+  .command(
+    'migrate:destroy',
+    'Delete the index and all migrations',
+    async () => {
+      try {
+        await migrate.destroy();
       } catch (err) {
         console.error(colors.red(err));
       }
@@ -103,8 +106,8 @@ yargs(hideBin(process.argv))
         type: 'string',
       });
     },
-    (argv) => {
-      seed.make(argv.name);
+    async (argv) => {
+      await seed.make(argv.name);
       console.log(colors.green('Seed file created successfully'));
     }
   )
@@ -119,9 +122,19 @@ yargs(hideBin(process.argv))
     },
     async (argv) => {
       try {
-        const {client} =  new Client()
-        const {message} = await seed.run(client, argv.file);
+        const {message} = await seed.run(argv.file);
         console.log(colors.green(message));
+      } catch (err) {
+        console.error(colors.red(err));
+      }
+    }
+  )
+  .command(
+    'seed:destroy',
+    'Delete the index and all migrations',
+    async () => {
+      try {
+        await seed.destroy();
       } catch (err) {
         console.error(colors.red(err));
       }

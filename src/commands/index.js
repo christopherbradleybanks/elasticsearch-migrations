@@ -1,6 +1,6 @@
-const migrate = require(`./migrate`)
-const seed = require(`./seed`)
+const Migrate = require(`./migrate`)
+const Seed = require(`./seed`)
 module.exports = {
-    migrate,
-    seed,
+    Migrate,
+    Seed,
 }

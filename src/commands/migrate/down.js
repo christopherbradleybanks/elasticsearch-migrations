@@ -1,4 +1,4 @@
-const { processMigrations, getProcessedMigrations, initDB } = require('../../utils/helpers');
+const { processMigrations, getProcessedMigrations, initDB, deleteMigratedDownDocuments } = require('../../utils/helpers');
 
 async function down(client, targetMigration) {
   //ensure indices are created
@@ -23,8 +23,12 @@ async function down(client, targetMigration) {
     processedMigrations = processedMigrations.slice(0, 1);
   }
   const {batchId, message} = await processMigrations(processedMigrations, 'down', client)
+
   if(!batchId) {
     return {message}
+  }
+  else{
+    await deleteMigratedDownDocuments(client, batchId)
   }
   if(targetMigration){
     return {message: `Migrations reverted starting from ${batchId} until ${targetMigration}`}
