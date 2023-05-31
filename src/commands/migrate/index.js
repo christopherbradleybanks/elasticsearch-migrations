@@ -53,7 +53,7 @@ class Migrate {
    * @return {message}
    */
   async make(...args) {
-    return make(this.client, ...args);
+    return make(...args);
   }
   /**
    *
