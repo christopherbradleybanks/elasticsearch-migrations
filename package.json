@@ -1,11 +1,11 @@
 {
     "name": "elasticsearch-migrations",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A migration tool for Elasticsearch.",
     "main": "src/index.js",
     "author": "Chris Banks <github@christopherbradleybanks.com>",
     "scripts": {
-        "prepublish": "scripts/prepublish.sh",
+        "prepare": "scripts/prepare.sh",
         "release": "np --no-tests",
         "test": "echo 'Error: no test specified'"
     },
@@ -20,7 +20,8 @@
         "schema",
         "db",
         "nosql",
-        "seed"
+        "seed",
+        "knex"
     ],
     "dependencies": {
         "@elastic/elasticsearch": "^8.7.0",
@@ -35,5 +36,19 @@
     "license": "MIT",
     "engines": {
         "node": "^14.17.0 || ^16.0.0 || >= 18.0.0"
-    }
+    },
+    "devDependencies": {
+        "eslint": "^8.41.0",
+        "eslint-config-google": "^0.14.0",
+        "husky": "^8.0.3",
+        "lint-staged": "^13.2.2"
+    },
+    "husky": {
+        "hooks": {
+          "pre-commit": "lint-staged"
+        }
+      },
+      "lint-staged": {
+        "*.{js,jsx}": ["eslint --fix", "git add"]
+      },
 }

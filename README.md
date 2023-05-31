@@ -63,15 +63,15 @@ Elastic Migrate provides a set of command-line utilities to help manage Elastics
     elastic-migrate migrate:latest
     ```
     
-- `migrate:rollback [all]`: Revert the latest batch of migrations. If the optional `[all]` argument is provided and set to true, all completed migrations will be reversed.
+- `migrate:rollback --all`: Revert the latest batch of migrations. If the optional `--all` argument is provided all completed migrations will be reversed.
 
     Example usage:
     ```bash
     elastic-migrate migrate:rollback
     ```
-    or with the `[all]` option:
+    or with the `--all` option:
     ```bash
-    elastic-migrate migrate:rollback true
+    elastic-migrate migrate:rollback --all
     ```
 
 This command reverts migrations that have previously been applied. Without any options, it will revert the last batch of migrations that were applied. If the `[all]` option is set to true, it will reverse all migrations that have been applied, effectively rolling back all changes made by this tool.
@@ -84,16 +84,16 @@ This command reverts migrations that have previously been applied. Without any o
     ```
 
 This command will remove the history index but will not undo any migrations 
-#### Seeds (pending)
+#### Seeds 
 
-- `seed:make <name>`: Create a new seed file. Replace `<name>` with the desired name for your seed file. *Note: this command is currently a stub and not implemented.*
+- `seed:make <name>`: Create a new seed file. Replace `<name>` with the desired name for your seed file. 
 
     Example usage:
     ```bash
     elastic-migrate seed:make seed_users_index
     ```
 
-- `seed:run [file]`: Run all seed files that have not yet been applied. If the optional `[file]` argument is provided, only the specified seed file will be applied. *Note: this command is currently a stub and not implemented.*
+- `seed:run [file]`: Run all seed files that have not yet been applied. If the optional `[file]` argument is provided, only the specified seed file will be applied. 
 
     Example usage:
     ```bash
@@ -145,6 +145,7 @@ await seed.destroy()
 ## Configuration
 
 The package uses environment variables for configuration. These can be set in a `.env` file in your project root.
+- `SEEDS_DIR`: The directory where your migration files are located. Default is `./seeds`.
 - `MIGRATIONS_DIR`: The directory where your migration files are located. Default is `./migrations`.
 - `NODE_ENV`: The current environment. Use `development` for local development and `production` for production. Default is `development`.
 - `LOCAL_ELASTICSEARCH_URL`: The URL of your local Elasticsearch instance.

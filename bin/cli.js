@@ -39,11 +39,12 @@ yargs(hideBin(process.argv))
     }
   )
   .command(
-    'migrate:rollback [all]',
+    'migrate:rollback',
     `Revert latest migrations`,
     (yargs) => {
-      yargs.positional('all', {
-        describe: 'rollback all migrations',
+      yargs.option('all', {
+        alias: `a`,
+        description: 'rollback all migrations',
         type: 'boolean',
       });
     },
@@ -88,7 +89,7 @@ yargs(hideBin(process.argv))
   )
   .command(
     'migrate:destroy',
-    'Delete the index and all migrations',
+    'Delete the index and all migration history',
     async () => {
       try {
         await migrate.destroy();
@@ -131,7 +132,7 @@ yargs(hideBin(process.argv))
   )
   .command(
     'seed:destroy',
-    'Delete the index and all migrations',
+    'Delete the index and all seed history',
     async () => {
       try {
         await seed.destroy();
