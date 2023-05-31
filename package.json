@@ -7,7 +7,8 @@
     "scripts": {
         "prepare": "scripts/prepare.sh",
         "release": "np --no-tests",
-        "test": "echo 'Error: no test specified'"
+        "test": "echo 'Error: no test specified'",
+        "eslint": "eslint --fix ."
     },
     "bin": {
         "elastic-migrate": "./bin/cli.js"
@@ -40,15 +41,19 @@
     "devDependencies": {
         "eslint": "^8.41.0",
         "eslint-config-google": "^0.14.0",
+        "eslint-plugin-putout": "^17.6.0",
         "husky": "^8.0.3",
         "lint-staged": "^13.2.2"
     },
     "husky": {
         "hooks": {
-          "pre-commit": "lint-staged"
+            "pre-commit": "lint-staged"
         }
-      },
-      "lint-staged": {
-        "*.{js,jsx}": ["eslint --fix", "git add"]
-      }
+    },
+    "lint-staged": {
+        "*.{js,jsx}": [
+            "eslint --fix",
+            "git add"
+        ]
+    }
 }

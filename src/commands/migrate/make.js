@@ -25,4 +25,4 @@ module.exports.down = async (client) => {
   fs.writeFileSync(filepath, template);
 
   console.log(`Created migration: ${filepath}`);
-}
+};

@@ -1,5 +1,4 @@
 
 module.exports.up = async (client) => {
-  // TODO: Implement seed 
+  // TODO: Implement seed
 };
-  

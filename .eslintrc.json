@@ -7,9 +7,16 @@
     "extends": "google",
     "overrides": [
     ],
+    "plugins": ["putout"],
     "parserOptions": {
         "ecmaVersion": "latest"
     },
     "rules": {
+        "putout/multiple-properties-destructuring": [
+            "error",
+            {
+              "minProperties": 1
+            }
+          ]
     }
 }

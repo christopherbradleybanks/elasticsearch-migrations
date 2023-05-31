@@ -1,6 +1,14 @@
-const { Errors, Client } = require('@elastic/elasticsearch');
+const {
+  Errors,
+  Client,
+
+} = require('@elastic/elasticsearch');
 const config = require('./config');
- 
+/**
+ *
+ * @param {*} options
+ * @return {client}
+ */
 function createClient(options) {
   const env = process.env.NODE_ENV || 'development';
   const clientConfig = options || config[env].elasticsearchOptions;
@@ -10,19 +18,30 @@ function createClient(options) {
   const client = new Client(clientConfig);
   return client;
 }
-
+/**
+ *
+ */
 class ElasticsearchClientSingleton {
-    constructor(options){
-      if (ElasticsearchClientSingleton.instance) {
-        return ElasticsearchClientSingleton.instance
-      }
-      this.client = createClient(options)
-      this.errors = Errors
-      ElasticsearchClientSingleton.instance = this
-    return this
+  /**
+   *
+   * @param {*} options
+   * @return {client}
+   */
+  constructor(options) {
+    if (ElasticsearchClientSingleton.instance) {
+      return ElasticsearchClientSingleton.instance;
+    }
+    this.client = createClient(options);
+    this.errors = Errors;
+    ElasticsearchClientSingleton.instance = this;
+    return this;
   }
-  getClient(){
-    return this.client
+  /**
+   *
+   * @return {client}
+   */
+  getClient() {
+    return this.client;
   }
 }
 

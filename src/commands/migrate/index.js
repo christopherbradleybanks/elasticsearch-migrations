@@ -1,31 +1,68 @@
-const down = require(`./down`)
-const up = require(`./up`)
-const latest = require(`./latest`)
-const rollback = require(`./rollback`)
-const make = require(`./make`)
-const destroy = require(`./destroy`)
+const down = require(`./down`);
+const up = require(`./up`);
+const latest = require(`./latest`);
+const rollback = require(`./rollback`);
+const make = require(`./make`);
+const destroy = require(`./destroy`);
+/**
+ *The Migrate Class
+ */
 class Migrate {
-    constructor(client){
-        this.client = client
-    }
-    async down (...args){
-        return down(this.client,...args)
-    }
-    async up(...args){
-        return up(this.client,...args)
-    }
-    async latest(...args){
-        return latest(this.client,...args)
-    }
-    async rollback(...args){
-        return rollback(this.client,...args)
-    }
-    async make(...args){
-        return make(this.client,...args)
-    }
-    async destroy(...args){
-        return destroy(this.client, ...args)
-    }
+  /**
+   *
+   * @param {*} client
+   */
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   *
+   * @param {...any} args
+   * @return {message}
+   */
+  async down(...args) {
+    return down(this.client, ...args);
+  }
+  /**
+   *
+   * @param  {...any} args
+   * @return {message}
+   */
+  async up(...args) {
+    return up(this.client, ...args);
+  }
+  /**
+   *
+   * @param  {...any} args
+   * @return {message}
+   */
+  async latest(...args) {
+    return latest(this.client, ...args);
+  }
+  /**
+   *
+   * @param  {...any} args
+   * @return {message}
+   */
+  async rollback(...args) {
+    return rollback(this.client, ...args);
+  }
+  /**
+   *
+   * @param  {...any} args
+   * @return {message}
+   */
+  async make(...args) {
+    return make(this.client, ...args);
+  }
+  /**
+   *
+   * @param  {...any} args
+   * @return {message}
+   */
+  async destroy(...args) {
+    return destroy(this.client, ...args);
+  }
 }
 
-module.exports = Migrate
+module.exports = Migrate;

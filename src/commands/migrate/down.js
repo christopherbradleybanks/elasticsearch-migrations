@@ -1,8 +1,19 @@
-const { processMigrations, getProcessedMigrations, initDB, deleteMigratedDownDocuments } = require('../../utils/helpers');
+const {
+  processMigrations,
+  getProcessedMigrations,
+  initDB,
+  deleteMigratedDownDocuments,
+} = require('../../utils/helpers');
 
+/**
+ *
+ * @param {*} client
+ * @param {*} targetMigration
+ * @return {message}
+ */
 async function down(client, targetMigration) {
-  //ensure indices are created
-  await initDB(client)
+  // ensure indices are created
+  await initDB(client);
   // Get migrations from the index that have been run up
   let processedMigrations = await getProcessedMigrations(client, 'up');
 
@@ -16,25 +27,37 @@ async function down(client, targetMigration) {
       throw new Error('Target migration not found or not in "up" state');
     }
 
-    // Adjust indexMigrations to include migrations up to and including the target
+    // Adjust indexMigrations to include
+    // migrations up to and including the target
     processedMigrations = processedMigrations.slice(0, targetIndex + 1);
   } else {
     // If targetMigration is not specified, just run the last migration
     processedMigrations = processedMigrations.slice(0, 1);
   }
-  const {batchId, message} = await processMigrations(processedMigrations, 'down', client)
+  const {
+    batchId,
+    message,
 
-  if(!batchId) {
-    return {message}
+  } = await processMigrations(processedMigrations,
+      'down',
+      client);
+
+  if (!batchId) {
+    return {
+      message,
+    };
+  } else {
+    await deleteMigratedDownDocuments(client, batchId);
   }
-  else{
-    await deleteMigratedDownDocuments(client, batchId)
-  }
-  if(targetMigration){
-    return {message: `Migrations reverted starting from ${batchId} until ${targetMigration}`}
-  }
-  else {
-    return {message: `Migration ${batchId} successfully reverted.`}
+  if (targetMigration) {
+    return {
+      message: `Migrations reverted starting from 
+      ${batchId} until ${targetMigration}`,
+    };
+  } else {
+    return {
+      message: `Migration ${batchId} successfully reverted.`,
+    };
   }
 }
 

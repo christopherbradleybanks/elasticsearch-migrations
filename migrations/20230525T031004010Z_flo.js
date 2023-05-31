@@ -6,4 +6,3 @@ module.exports.up = async (client) => {
 module.exports.down = async (client) => {
   // TODO: Implement down migration
 };
-  

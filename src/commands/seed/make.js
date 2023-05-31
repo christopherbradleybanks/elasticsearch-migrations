@@ -21,4 +21,4 @@ module.exports.up = async (client) => {
   fs.writeFileSync(filepath, template);
 
   console.log(`Created seed: ${filepath}`);
-}
+};
