@@ -152,6 +152,7 @@ The package uses environment variables for configuration. These can be set in a 
 - `PROD_ELASTICSEARCH_URL`: The URL of your production Elasticsearch instance.
 - `LOCAL_ELASTICSEARCH_AUTH`: The authentication strategy and credentials for your local Elasticsearch instance. See [Authentication Strategies](#authentication-strategies) for more information.
 - `PROD_ELASTICSEARCH_AUTH`: The authentication strategy and credentials for your production Elasticsearch instance. See [Authentication Strategies](#authentication-strategies) for more information.
+- `CLOUD_ID`: The cloud id for your elastic cloud deployment
 - `LOCAL_TLS_CA_CERT`: The path to your local CA certificate file.
 - `PROD_TLS_CA_CERT`: The path to your production CA certificate file.
 - `LOCAL_CA_FINGERPRINT`: The CA fingerprint for your local Elasticsearch instance.
