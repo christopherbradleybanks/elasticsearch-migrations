@@ -1,6 +1,6 @@
 {
     "name": "elasticsearch-migrations",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "A migration tool for Elasticsearch.",
     "main": "src/index.js",
     "author": "Chris Banks <github@christopherbradleybanks.com>",
